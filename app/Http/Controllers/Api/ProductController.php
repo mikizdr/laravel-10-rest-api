@@ -5,19 +5,22 @@ namespace App\Http\Controllers\Api;
 use App\Models\Product;
 use Illuminate\Http\JsonResponse;
 use App\Http\Controllers\Controller;
+use App\Http\Resources\ProductResource;
 use App\Http\Requests\ProductCreateRequest;
 use App\Http\Requests\ProductUpdateRequest;
 use Symfony\Component\HttpFoundation\Response;
+use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 
 class ProductController extends Controller
 {
     /**
      * Display a listing of the resource.
      *
+     * @return AnonymousResourceCollection
      */
-    public function index()
+    public function index(): AnonymousResourceCollection
     {
-        return Product::all();
+        return ProductResource::collection(Product::all());
     }
 
     /**
@@ -25,12 +28,13 @@ class ProductController extends Controller
      *
      * @param ProductCreateRequest $request
      *
+     * @return ProductResource
      */
-    public function store(ProductCreateRequest $request)
+    public function store(ProductCreateRequest $request): ProductResource
     {
         $product = Product::create($request->validated());
 
-        return $product;
+        return ProductResource::make($product);
     }
 
     /**
@@ -38,10 +42,11 @@ class ProductController extends Controller
      *
      * @param Product $product
      *
+     * @return ProductResource
      */
-    public function show(Product $product)
+    public function show(Product $product): ProductResource
     {
-        return $product;
+        return ProductResource::make($product);
     }
 
     /**
@@ -50,12 +55,13 @@ class ProductController extends Controller
      * @param ProductUpdateRequest $request
      * @param Product $product
      *
+     * @return ProductResource
      */
-    public function update(ProductUpdateRequest $request, Product $product)
+    public function update(ProductUpdateRequest $request, Product $product): ProductResource
     {
         $product->update($request->validated());
 
-        return $product;
+        return ProductResource::make($product);
     }
 
     /**
@@ -65,7 +71,7 @@ class ProductController extends Controller
      *
      * @return JsonResponse
      */
-    public function destroy(Product $product)
+    public function destroy(Product $product): JsonResponse
     {
         try {
             $product->delete();

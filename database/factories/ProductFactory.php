@@ -19,7 +19,7 @@ class ProductFactory extends Factory
     {
         return [
             'user_id' => User::factory(),
-            'name' => fake()->name(),
+            'name' => fake()->sentence(2),
             'description' => fake()->text(500),
             'price' => fake()->randomFloat(2, 1, 100),
         ];

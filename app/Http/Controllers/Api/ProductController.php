@@ -82,9 +82,7 @@ class ProductController extends Controller
         try {
             $product->delete();
 
-            return response()->json([
-                'message' => __('Product deleted successfully.'),
-            ]);
+            return response()->json([], Response::HTTP_NO_CONTENT);
         } catch (\Throwable $e) {
             return response()->json([
                 'message' => __($e->getMessage()),

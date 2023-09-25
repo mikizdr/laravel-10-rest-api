@@ -2,8 +2,10 @@
 
 namespace App\Policies;
 
-use App\Models\Product;
 use App\Models\User;
+use App\Models\Product;
+use Illuminate\Auth\Access\Response;
+use Illuminate\Http\JsonResponse;
 
 /**
  * This class is intended to be used for authorization
@@ -43,9 +45,11 @@ class ProductPolicy
      *
      * @return boolean
      */
-    public function create(User $user): bool
+    public function create(User $user): Response
     {
-        return auth()->id() === $user->id;
+        return auth()->id() === $user->id
+            ? Response::allow()
+            : Response::deny('You are not authorized for this action.');
     }
 
     /**
@@ -56,9 +60,11 @@ class ProductPolicy
      *
      * @return boolean
      */
-    public function update(User $user, Product $product): bool
+    public function update(User $user, Product $product): Response
     {
-        return $product->user()->is($user);
+        return $product->user()->is($user)
+            ? Response::allow()
+            : Response::deny('You do not own this product.');
     }
 
     /**
@@ -69,9 +75,11 @@ class ProductPolicy
      *
      * @return boolean
      */
-    public function delete(User $user, Product $product): bool
+    public function delete(User $user, Product $product): Response
     {
-        return $product->user()->is($user);
+        return $product->user()->is($user)
+            ? Response::allow()
+            : Response::deny('You do not own this product.');
     }
 
     /**

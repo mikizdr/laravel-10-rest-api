@@ -3,6 +3,7 @@
 namespace Tests\Feature\app\Http\Controllert\Api;
 
 use Tests\TestCase;
+use App\Models\User;
 use App\Models\Product;
 use Illuminate\Support\Str;
 use Illuminate\Foundation\Testing\WithFaker;
@@ -56,49 +57,6 @@ class ProductControllerTest extends TestCase
                 ]
             ]
         ]);
-    }
-
-    /**
-     * @test
-     *
-     * @covers ::store
-     *
-     * @return void
-     */
-    public function store_can_create_a_new_product(): void
-    {
-        // Build a non-persisted product factory model.
-        $newProduct = Product::factory()->make([
-            'user_id' => $this->user->id,
-        ]);
-
-        $response = $this->actingAs($this->user)->postJson(
-            route(self::ROUTE_PREFIX . 'store'),
-            $newProduct->toArray()
-        );
-
-        // Assertion that the product has been created with status 201.
-        $response->assertCreated();
-
-        // Assert that an appropriate JSON response is returned.
-        $product = $response->getData()->data;
-        $response->assertJson([
-            'data' => [
-                'id' => $product->id,
-                'user' => $product->user,
-                'name' => $product->name,
-                'description' => $product->description,
-                'price' => $product->price,
-                'created_at' => $product->created_at,
-                'updated_at' => $product->updated_at,
-            ],
-        ]);
-
-        // The table products contains the newly created product.
-        $this->assertDatabaseHas(
-            'products',
-            $newProduct->toArray()
-        );
     }
 
     /**
@@ -173,7 +131,77 @@ class ProductControllerTest extends TestCase
     /**
      * @test
      *
-     * @covers ::create
+     * @covers ::store
+     *
+     * @return void
+     */
+    public function store_can_create_a_new_product(): void
+    {
+        // Build a non-persisted product factory model.
+        $newProduct = Product::factory()->make([
+            'user_id' => $this->user->id,
+        ]);
+
+        $response = $this->actingAs($this->user)->postJson(
+            route(self::ROUTE_PREFIX . 'store'),
+            $newProduct->toArray()
+        );
+
+        // Assertion that the product has been created with status 201.
+        $response->assertCreated();
+
+        // Assert that an appropriate JSON response is returned.
+        $product = $response->getData()->data;
+        $response->assertJson([
+            'data' => [
+                'id' => $product->id,
+                'user' => $product->user,
+                'name' => $product->name,
+                'description' => $product->description,
+                'price' => $product->price,
+                'created_at' => $product->created_at,
+                'updated_at' => $product->updated_at,
+            ],
+        ]);
+
+        // The table products contains the newly created product.
+        $this->assertDatabaseHas(
+            'products',
+            $newProduct->toArray()
+        );
+    }
+
+    /**
+     * @test
+     *
+     * @covers ::store
+     *
+     * @return void
+     */
+    public function only_authenticated_user_can_create_product(): void
+    {
+        $newProduct = Product::factory()->make([
+            'user_id' => $this->user->id,
+        ]);
+
+        $response = $this->postJson(
+            route(self::ROUTE_PREFIX . 'store'),
+            $newProduct->toArray()
+        );
+
+        $response->assertStatus(401);
+        $this->assertGuest();
+
+        $this->assertDatabaseMissing(
+            'products',
+            $newProduct->toArray()
+        );
+    }
+
+    /**
+     * @test
+     *
+     * @covers ::store
      *
      * @dataProvider create_product_with_various_possible_values
      *
@@ -308,18 +336,58 @@ class ProductControllerTest extends TestCase
     /**
      * @test
      *
-     * @covers ::delete
+     * @covers ::update
      *
      * @return void
      */
-    public function delete_can_delete_a_product(): void
+    public function only_product_owner_can_update_product(): void
     {
-        $existingProperty = Product::factory()->create([
+        // Update name and description.
+        $dataForUpdate = [
+            'name' => 'UPDATED NAME',
+            'description' => 'Updated description',
+        ];
+
+        // Create a new product.
+        $user = User::factory()->create();
+        $existingProduct = Product::factory()->create([
+            'user_id' => $user->id,
+        ]);
+
+        // New data for updating the existing product.
+        $newProduct = Product::factory()->make(array_merge([
+            'user_id' => $this->user->id,
+        ], $dataForUpdate));
+
+        $response = $this->actingAs($this->user)->putJson(
+            route(self::ROUTE_PREFIX . 'update', [$existingProduct]),
+            $newProduct->toArray()
+        );
+
+        $response->assertForbidden();
+
+        // Assertion the db doesn't have updated product.
+        $this->assertDatabaseMissing(
+            'products',
+            $dataForUpdate
+        );
+    }
+
+    /**
+     * @test
+     *
+     * @covers ::destroy
+     *
+     * @return void
+     */
+    public function destroy_can_delete_a_product(): void
+    {
+        $existingProduct = Product::factory()->create([
             'user_id' => $this->user->id,
         ]);
 
         $response = $this->actingAs($this->user)->deleteJson(
-            route(self::ROUTE_PREFIX . 'destroy', $existingProperty)
+            route(self::ROUTE_PREFIX . 'destroy', $existingProduct)
         );
 
         $response->assertNoContent();
@@ -328,7 +396,39 @@ class ProductControllerTest extends TestCase
         // the model that has been deleted.
         $this->assertDatabaseMissing(
             'products',
-            $existingProperty->toArray()
+            $existingProduct->toArray()
+        );
+    }
+
+    /**
+     * @test
+     *
+     * @covers ::destroy
+     *
+     * @return void
+     */
+    public function destroy_only_product_owener_can_delete_product(): void
+    {
+        $user = User::factory()->create();
+        $existingProduct = Product::factory()->create([
+            'user_id' => $user->id,
+        ]);
+
+        $response = $this->actingAs($this->user)->deleteJson(
+            route(self::ROUTE_PREFIX . 'destroy', $existingProduct)
+        );
+
+        $response->assertForbidden();
+
+        // Asertion that the product still exists in the database.
+        $existingProduct = $existingProduct->toArray();
+        // For some reason, timestamps have a little bit different format at the end of the string.
+        // They are not so important for thsi assertion, remove them from the array.
+        unset($existingProduct['created_at']);
+        unset($existingProduct['updated_at']);
+        $this->assertDatabaseHas(
+            'products',
+            $existingProduct
         );
     }
 }

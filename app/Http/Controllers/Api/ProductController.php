@@ -79,14 +79,8 @@ class ProductController extends Controller
     {
         $this->authorize('delete', $product);
 
-        try {
-            $product->delete();
+        $product->delete();
 
-            return response()->json([], Response::HTTP_NO_CONTENT);
-        } catch (\Throwable $e) {
-            return response()->json([
-                'message' => __($e->getMessage()),
-            ], Response::HTTP_BAD_REQUEST);
-        }
+        return response()->json([], Response::HTTP_NO_CONTENT);
     }
 }

@@ -188,8 +188,6 @@ class ProductControllerTest extends TestCase
         string|int $brokenRule,
         string $expectedMessage
     ): void {
-        // $validatedField = 'name';
-        // $brokenRule = Str::random(300);
 
         $product = Product::factory()->make([
             $validatedField => $brokenRule

@@ -24,7 +24,7 @@ class ProductCreateRequest extends FormRequest
         return [
             'name' => 'required|string|max:255',
             'description' => 'required|string|max:5000',
-            'price' => 'required|decimal:2|gt:0'
+            'price' => 'required|numeric|gt:0'
         ];
     }
 }

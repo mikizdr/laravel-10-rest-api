@@ -42,6 +42,7 @@ Route::middleware(['throttle:10,1', 'auth:sanctum']) // middlewares for throttli
         // for this case.
         // TODO: extract 'index' and 'show' method outside of protected routes if they should be public.
         Route::apiResource('products', ProductController::class)
+            // Sends an appropriate JSON response for missing resource.
             ->missing(function (Request $request): JsonResponse {
                 return response()->json([
                     'message' => 'Product not found',

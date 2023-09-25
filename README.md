@@ -7,60 +7,63 @@
 <a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
 </p>
 
-## About Laravel
+## REST API for CRUD operations on product resources
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+This is a simple service for CRUD operations on product resources via appropriate endpoints. It is used Laravel's functionality and present solution in the core of the framework to acchive the required functionality.
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+The routes are defined in the `api.php` file: for authentication and for CRUD operations. Since Sanctum package comes in a fresh Laravel installation, it is used for authentication.
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+For different CRUD operations `apiResource` static method is used that wraps up all HTTP methods for CRUD operations: GET, POST, PUT|PATCH AND DELETE. From the task it's not clear (at least to mee) whether routes for fetching all products or single product should be public or protected. This implementation protects the routes but if the request is to some of the mentioned routes shoud be public, they should be moved out from the protected group. `missing` method is used to handle the case when there is no resource that is required to be used for some of the actions.
 
-## Learning Laravel
+For route protection are used 2 middlewares: one is for rate limit and the other one for authentication. Product routes have the name prefix `api.` for naming routes, how their names would be different from the names of web routes. API version is marked as `v1` as API versioning rules.
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+`ProductController` is the API resource controller for manipulating with product resources via appropriate methods: index, show, create, update and delete. Those methods are specified for API resource controllers.
 
-You may also try the [Laravel Bootcamp](https://bootcamp.laravel.com), where you will be guided through building a modern Laravel application from scratch.
+`ProductResource` is used to easily adopt/transform response from the API depending on the request from the other side (front-end or 3rd party services).
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains over 2000 video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+All requests for resource creating/mutating are validated against predefined rules. For that purpose, it is used `ProductCreateRequest` and `ProductUpdateRequest`, `RegisterRequest` and `LoginRequest`.
 
-## Laravel Sponsors
+Authorization for some actions is provided by using `ProductPolicy`. In that case only user that owns the resource (creator of the resource) is allowed to POST, PUT|PATCH or DELETE the resource.
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the Laravel [Patreon page](https://patreon.com/taylorotwell).
+## Requirements
 
-### Premium Partners
+For this application to work appropriately, the running environment must have the next tools installed:
+- Git V2.X
+- PHP V8.2.X
+- Composer V2.5.1
 
-- **[Vehikl](https://vehikl.com/)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Cubet Techno Labs](https://cubettech.com)**
-- **[Cyber-Duck](https://cyber-duck.co.uk)**
-- **[Many](https://www.many.co.uk)**
-- **[Webdock, Fast VPS Hosting](https://www.webdock.io/en)**
-- **[DevSquad](https://devsquad.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel/)**
-- **[OP.GG](https://op.gg)**
-- **[WebReinvent](https://webreinvent.com/?utm_source=laravel&utm_medium=github&utm_campaign=patreon-sponsors)**
-- **[Lendio](https://lendio.com)**
+## Installation
 
-## Contributing
+1. clone repository
+2. install dependencies via Composer: `composer install`
+3. make a copy of `.env.example` to `.env`
+4. generate application key: `php artisan key:generate`
+5. in `.env` insert information about DB - connection, database name, username and password. Or if you want to use `sqlite`, without having some of the robust DBs, just do the next thing:
+    ```php
+    DB_CONNECTION=sqlite
+    # DB_HOST=127.0.0.1
+    # DB_PORT=3306
+    # DB_DATABASE=laravel
+    # DB_USERNAME=root
+    # DB_PASSWORD=
+    ```
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+## Testing
 
-## Code of Conduct
+1. PHPUnit testing is set up for in-memory testing with SQLite. If you want to run tests over some of the other databases, just comment on the following lines in `phpunit.xml`:
+    ```xml
+    <!-- <env name="DB_CONNECTION" value="sqlite"/>
+    <env name="DB_DATABASE" value=":memory:"/> -->
+    ```
+    and setup the database's connection and credentials in `.env` file.
+    Feature test `ProductControllerTest` fully covers the `ProductController` class. So, before all it is good to run those tests to see the results.
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+2. Testing with Postman
+    There are `json` files in `/docs/postman-collections/` for the Postman's collection and testing environment.
+    - Import them into Postman.
+    - If you are using SQLite database, create a new file in `/database/database.sqlite`. If you are using, let's say, `MySQL` setup the database credentials in `.env` file.
+    - run `php artisan migrate` to populate the DB with the tables
+    - run `php artisan serve` to have up and running web server
 
-## Security Vulnerabilities
+    Since the routes are protected, the first thing is user's registration or login, and after that all CRUD actions could be tested.
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
-
-## License
-
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).

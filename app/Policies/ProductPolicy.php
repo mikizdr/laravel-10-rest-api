@@ -47,6 +47,10 @@ class ProductPolicy
      */
     public function create(User $user): Response
     {
+        // NOTE: for this case it is not neccessary to have this type of authorization
+        // because only authenticated users can create a new resource. But in the case when
+        // we have multirole application with different permissions, for that case this
+        // authorization makes sense. (e.g.: if the user is admin he can create a new resource.)
         return auth()->id() === $user->id
             ? Response::allow()
             : Response::deny('You are not authorized for this action.');

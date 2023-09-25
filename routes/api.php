@@ -37,6 +37,9 @@ Route::middleware(['throttle:10,1', 'auth:sanctum']) // middlewares for throttli
     ->prefix('v1') // API version
     ->name('api.') // route name prefix
     ->group(function () {
+        // Since CRUD operations are implemented on the Product resourc/model, and we need a REST API,
+        // it is convenient to use 'apiResource' static method that wraps up all the required HTTP methods
+        // for this case.
         // TODO: extract 'index' and 'show' method outside of protected routes if they should be public.
         Route::apiResource('products', ProductController::class)
             ->missing(function (Request $request): JsonResponse {
